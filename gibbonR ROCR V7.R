@@ -60,7 +60,7 @@ for(k in 1:length(RandomIterFolders)){
   print(k)
   # Select the folder
   output.dir <- RandomIterFolders[k]
-  range.secs.start <- 3
+  range.secs.start <- 6
   range.secs.end <- 3
   
   # List short and long file names
@@ -194,21 +194,22 @@ RandomDetectionsDF <- rbind.data.frame(CombinedDetectionDF,RandomDetectionsDF)
 ProbthreshSeq <- seq(0,1,0.1)
 
 # Convert ML probability to numeric
-CombinedDetectionDF$RandomDetectionsDF <- as.numeric(CombinedDetectionDF$probability)
+RandomDetectionsDF$probability <- as.numeric(RandomDetectionsDF$probability)
 
 # Isolate training data folders
-UniqueTraining <- unique(RandomDetectionsDF$trainingdata)
+UniqueFile <- unique(RandomDetectionsDF$File.Name)
 
 ROCRPerformanceDFCombined <- data.frame()
 PerformanceDF <- data.frame()
 AUCDfCombined <- data.frame()
-for(a in 1:length(UniqueTraining)){
+for(a in 1:length(UniqueFile)){
   # Subset based on training folders
-  RandomDetectionsDFTemp <-   subset(RandomDetectionsDF,trainingdata==UniqueTraining[a])
-  
+  RandomDetectionsDFTemp <-   subset(RandomDetectionsDF,File.Name==UniqueFile[a])
+  RandomDetectionsDFTemp <- RandomDetectionsDFTemp[which(as.numeric(RandomDetectionsDFTemp$End.Time..s.) - as.numeric(RandomDetectionsDFTemp$Begin.Time..s.) >=6),]
   # Index based on ML algorithm
   UniqueML <- unique(RandomDetectionsDFTemp$model.type)
   
+  if(nrow(RandomDetectionsDFTemp)>0){
   # Loop by algorithm
   for(b in 1: length(UniqueML)){ 
     
@@ -243,7 +244,7 @@ for(a in 1:length(UniqueTraining)){
     Probability <- perfF1@x.values[[1]]
     
     # Combine AUC into dataframe
-    AUCDf <- cbind.data.frame(auc,UniqueTraining[a],MLAlgo)
+    AUCDf <- cbind.data.frame(auc,UniqueFile[a],MLAlgo)
     colnames(AUCDf) <- c('AUC','TrainingData','MLAlgo')
     AUCDfCombined <- rbind.data.frame(AUCDfCombined,AUCDf)
     
@@ -255,16 +256,16 @@ for(a in 1:length(UniqueTraining)){
       ROCRPerformanceDF %>% mutate(Probability = cut(Probability, breaks=ProbthreshSeq))
     
     # Add training data info
-    ROCRPerformanceDF$TrainingData <- UniqueTraining[a]
+    ROCRPerformanceDF$TrainingData <- UniqueFile[a]
     
     # Combine everything into a data frame
     ROCRPerformanceDFCombined <- rbind.data.frame(ROCRPerformanceDF,ROCRPerformanceDFCombined)
     
     # Combine with larger dataframe
-    PerformanceDF <- rbind.data.frame(PerformanceDF,PerformanceSeqDF)
+    PerformanceDF <- rbind.data.frame(PerformanceDF,ROCRPerformanceDFCombined)
     
   }
-
+  }
 }
 
 
@@ -289,9 +290,7 @@ ggboxplot(data=AUCDfCombined,x='TrainingDataSplit',y='AUC',color = 'TrainingData
 
 
 library(dplyr)
-performance.df <- ROCRPerformanceDFCombined
-performance.df$TrainingData <- str_split_fixed(performance.df$TrainingData,
-                                               pattern = '_',n=2)[,1]
+
 auc.df <- AUCDfCombined
 auc.df$Algorithm <- as.factor(auc.df$MLAlgo)
 auc.df$TrainingData <- str_split_fixed(auc.df$TrainingDataSplit,
@@ -328,6 +327,10 @@ anova(lm1)
 
 cowplot::plot_grid(AUCbox,AUCcoef)
 
+performance.df <- ROCRPerformanceDFCombined
+performance.df$TrainingData <- str_split_fixed(performance.df$TrainingData,
+                                               pattern = '_',n=2)[,1]
+
 performance.df$TrainingData <- as.factor(performance.df$TrainingData)
 
 
@@ -339,56 +342,18 @@ performance.df$TrainingData <- factor(performance.df$TrainingData,levels=c('Subs
 levels(performance.df$TrainingData) <-  c("n=10","n=20","n=40",
                                           "n=80","n=160","n=320", "n=400","All","All + F")#
 
-Precisionbox <- ggboxplot(data=performance.df,
-                          x='TrainingData',y='Precision',fill='TrainingData',facet.by = 'ml.algorithm')+ theme(axis.text.x = element_text(angle = 45,  hjust=1))+
-  theme(legend.position="none")
-
-
-lm2 <- lm(Precision ~ TrainingData * ml.algorithm, data=performance.df)
-Precisioncoef <- sjPlot::plot_model(lm2,sort.est =T) + geom_hline(yintercept = 0)+theme_bw()
-summary(lm2)
-
-cowplot::plot_grid(Precisionbox,Precisioncoef)
-
-Recallbox <- ggboxplot(data=performance.df,
-                       x='TrainingData',y='Recall',fill='TrainingData',facet.by = 'ml.algorithm')+ theme(axis.text.x = element_text(angle = 45,  hjust=1))+
-  theme(legend.position="none")
-
-
-lm3 <- lm(Recall ~ TrainingData *ml.algorithm, data=performance.df)
-Recallcoef <- sjPlot::plot_model(lm3,sort.est =T)+ylim(-0.2,0.4) + geom_hline(yintercept = 0)+theme_bw()
-summary(lm3)
-
-cowplot::plot_grid(Recallbox,Recallcoef)
-
-performance.df <- within(performance.df, TrainingData <- relevel(TrainingData, ref = "n=160"))
-performance.df$Algorithm <- performance.df$MLAlgo
-
-lm3 <- lm(F1 ~ TrainingData+Algorithm, data=performance.df)
-lm3algo <- lm(F1 ~ Algorithm, data=performance.df)
-lm3training <- lm(F1 ~ TrainingData, data=performance.df)
-lm3null <- lm(F1 ~ 1, data=performance.df)
-bbmle::AICctab(lm3,lm3null,weights=T)
-
-F1coef <- sjPlot::plot_model(lm3,sort.est =T)+ylim(-0.2,0.2) + geom_hline(yintercept = 0)+theme_bw()
-F1coef
-summary(lm3)
-
-cowplot::plot_grid(Recallbox,Recallcoef)
-
-subset(performance.df,TrainingData=='TrainingDataAll')
-
-library(dplyr)
 TempProb <-  str_split_fixed(performance.df$Probability, pattern = ',',n=2)[,2]
 TempProb <-  str_split_fixed(TempProb, pattern = ']',n=2)[,1]
+
 performance.df$Threshold <- as.numeric( TempProb )
 
 performance.df <- na.omit( performance.df )
 
+performance.df$Algorithm <-performance.df$MLAlgo
 
 performance.dfF1 <- performance.df %>% 
   group_by(Algorithm,TrainingData,Threshold) %>% 
-  summarize(  median=median(F1),sd=sd(F1)
+  summarize(mean=mean(F1),sd=sd(F1)
   )
 
 performance.dfF1$TrainingData <- as.factor(performance.dfF1$TrainingData )
@@ -403,11 +368,12 @@ performance.dfF1$Threshold <- as.numeric(performance.dfF1$Threshold)
 
 
 ggline(data=performance.dfF1,
-       x='Threshold',y='median',group  = 'TrainingData',color='TrainingData',shape='TrainingData',
+       x='Threshold',y='mean',group  = 'TrainingData',color='TrainingData',shape='TrainingData',
        facet.by = 'Algorithm')+
   scale_color_manual(values= matlab::jet.colors(length(unique(performance.dfF1$TrainingData))) )+
-  ylab('F1 score')+ylim(0,1)
+  ylab('F1 score')+ylim(0,1)+geom_hline(yintercept = max(performance.dfF1$mean),lty='dashed')
 
+performance.dfF1[which.max(performance.dfF1$mean),]
 
 # Summarize output --------------------------------------------------------
 
@@ -459,10 +425,6 @@ PerformanceDFSummary$F1MSD <- paste(PerformanceDFSummary$F1Med,
                                     "±",PerformanceDFSummary$F1SD)
 
 
-PerformanceDFSummary$TrainingData <- factor(PerformanceDFSummary$TrainingData,levels=c('Subset10', "Subset20","Subset40",
-                                                                                       "Subset80","Subset160","Subset320","Subset400",
-                                                                                       "TrainingDataAll","TrainingDataFemalesAdded"))
-
 
 
 PerformanceDFSummary <- 
@@ -481,7 +443,18 @@ PerformanceDFSummary <- cbind.data.frame(PerformanceDFSummary,auc.dfSummary$AUCM
 library(flextable)
 
 PerformanceTable <- flextable::flextable(PerformanceDFSummary[,c("TrainingData", "Algorithm",'PrecisionMSD','RecallMSD','F1MSD','auc.dfSummary$AUCMSD')])
+PerformanceTable <- set_header_labels(PerformanceTable,
+                        TrainingData = "Training Data",
+                        Algorithm = "Algorithm", 
+                        PrecisionMSD = "Precision (mean ± sd)",
+                        RecallMSD = "Recall (mean ± sd)",
+                        F1MSD = "F1 (mean ± sd)",
+                        `auc.dfSummary$AUCMSD` = "AUC (mean ± sd)"
+)
 
 ft_merge <- merge_v(PerformanceTable, j = c("TrainingData", "Algorithm"))
+ft_merge
+save_as_docx(ft_merge,path='PerformanceSummaryTableA_20221202.docx')
 
-save_as_docx(ft_merge,path='PerformanceSummaryTableA_20221116.docx')
+
+
