@@ -1,41 +1,62 @@
 library(gibbonR)
 
-# V3: Change duration to 5-sec
+# Set input directory for data and sound files
+# NOTE: You must change this to the location where you have stored the downloaded data
+input.dir <- '/Volumes/DJC Files/Clink et al Zenodo Data/'
 
-# Link to annotated selection tables -----------------------------------
-AnnotatedFiles <- list.files("Data/AnnotatedFilesValidation/")
-AnnotatedFilesFull <- list.files("Data/AnnotatedFilesValidation/",full.names = T)
+# Set directory to location of .wav files
+wavfile.dir <- paste(input.dir,'ValidationSoundFiles',sep='')
 
+# Set directory to location of training files
+training.file.directory <- paste(input.dir,'TrainingFilesValidated',sep='')
+
+# Set output directory for detection files
+detection.output.dir <- paste(input.dir,'RandomizationDetections',sep='')
+
+# Link to annotated selection tables 
+AnnotatedFiles <- list.files( paste(input.dir,'AnnotatedFilesValidation',sep=''))
+
+# Find full file path of annotated selection tables
+AnnotatedFilesFull <- list.files(paste(input.dir,'AnnotatedFilesValidation',sep=''),
+                                 full.names = T)
+
+# Isolate the file name
 Filename <- str_split_fixed(AnnotatedFiles,pattern = '.Table',n=2)[,1]
-ListofWavs <- list.files('/Volumes/Dena Clink Toshiba 3 TB/SWIFT_sparse_array_Danum/',recursive = T,full.names = T)
 
-ListIndex <- lapply(1:length(Filename),
-                    function(x)
-                      which(str_detect(ListofWavs,Filename[x])))
-
-WavFileNames <- ListofWavs[unlist(ListIndex)]
-WavFileNames
+# List wave files
+WavFileNames <- list.files(wavfile.dir,recursive = T,full.names = T)
 
 # Divide training dataset into smaller increments -------------------------
+# Determine number of training samples
 n.files <- 
-  length(list.files("Data/TrainingFilesValidated"))
+  length(list.files(training.file.directory))
 
-wav.file.names <- list.files("Data/TrainingFilesValidated")
+# List training .wav files
+wav.file.names <- list.files(training.file.directory)
 
+# Isolate label
 trainingdataID <- str_split_fixed(wav.file.names,pattern = '_',n=2)[,1]
 
+# Determine which recording it came from
 recordingID <- paste(str_split_fixed(wav.file.names,pattern = '_',n=5)[,2],
                      str_split_fixed(wav.file.names,pattern = '_',n=5)[,3],
                      str_split_fixed(wav.file.names,pattern = '_',n=5)[,4],sep='_')
 
-length(unique(recordingID))
 
+# Create table with training sample labels
 table(trainingdataID)
 
+# Isolate gibbon female samples
 duet.training <- which(trainingdataID=='duet')
+
+# Isolate the rest of the samples
 noise.training <- which(trainingdataID!='duet')
+
+# Create vector for number of samples to include in training
 subset.vals <- c(10,20,40,80,160,320,400)
 
+# Automated detection and classification over random iterations ----------------------------------
+# Loop to randomly sample training data over 10 iterations 
 for(z in 1:10){
 for(a in 1:length(subset.vals)){
   print(paste('processing',z, 'out of 10 for subset',subset.vals[a] ))
@@ -44,7 +65,7 @@ for(a in 1:length(subset.vals)){
   noise.subset <- noise.training[sample(1:length(noise.training),subset.val,replace = F)]
   combined.subset <- c(duet.subset,noise.subset)
   
-  subset.directory <- paste("/Volumes/Dena Clink Toshiba 3 TB/gibbonRandomDetections/TrainingSVMRF_all/",'Subset',subset.val,'_',z,sep='')
+  subset.directory <- paste('Data/Subset',subset.val,'_',z,sep='')
   
   if (!dir.exists(subset.directory)){
     dir.create(subset.directory)
@@ -53,9 +74,9 @@ for(a in 1:length(subset.vals)){
     print(paste(subset.directory,'already exists'))
   }
   
-  file.copy(file.path('TrainingFilesValidated',wav.file.names[combined.subset]), subset.directory)
+  file.copy(file.path(training.file.directory,wav.file.names[combined.subset]), subset.directory)
 
-  output.dir <- paste('/Users/denaclink/Desktop/RStudio Projects/Workflow-for-automated-detection-and-classification-gibbon-calls/gibbonRoutputRandomIterations5s/','Subset',subset.val,'_',z,sep='')
+  output.dir <- paste(detection.output.dir,'Subset',subset.val,'_',z,sep='')
   
   if (!dir.exists(output.dir)){
     dir.create(output.dir)
@@ -74,14 +95,11 @@ for(a in 1:length(subset.vals)){
                                         'hornbill.helmeted'='noise',
                                         'hornbill.rhino'='noise',
                                         'long.argus'='noise',
-                                        'short.argus'='noise'))
-  # 
+                                        'short.argus'='noise',
+                                        'solo'='noise'))
+
   trainingdata$class <- as.factor(trainingdata$class)
   
-  
-  # Automated detection and classification ----------------------------------
-  
-
   feature.df <- trainingdata
   
   gibbonR(input=WavFileNames,
@@ -112,23 +130,8 @@ for(a in 1:length(subset.vals)){
 }
 
 
-# Add in all training data and female added
-trainingdata <- MFCCFunction(input.dir= subset.directory, min.freq = 500, max.freq = 1600)
-
-trainingdata$class <- as.factor(trainingdata$class)
-
-trainingdata$class <- plyr::revalue(trainingdata$class,
-                                    c('duet'='female.gibbon',
-                                      'hornbill.helmeted'='noise',
-                                      'hornbill.rhino'='noise',
-                                      'long.argus'='noise',
-                                      'short.argus'='noise'))
-# 
-trainingdata$class <- as.factor(trainingdata$class)
-
-
 # Automated detection and classification all training data ----------------------------------
-trainingdata <- MFCCFunction(input.dir= "/Users/denaclink/Desktop/RStudio Projects/Gibbon-automated-detection/TrainingFilesValidated/", min.freq = 500, max.freq = 1600)
+trainingdata <- MFCCFunction(input.dir= paste(input.dir,'TrainingFilesValidated',sep=''), min.freq = 500, max.freq = 1600)
 
 trainingdata$class <- as.factor(trainingdata$class)
 
@@ -137,12 +140,13 @@ trainingdata$class <- plyr::revalue(trainingdata$class,
                                       'hornbill.helmeted'='noise',
                                       'hornbill.rhino'='noise',
                                       'long.argus'='noise',
-                                      'short.argus'='noise'))
+                                      'short.argus'='noise',
+                                      'solo'='noise'))
 # 
 trainingdata$class <- as.factor(trainingdata$class)
 
-output.dir <- '/Users/denaclink/Desktop/RStudio Projects/Workflow-for-automated-detection-and-classification-gibbon-calls/gibbonRoutputRandomIterations5s/TrainingDataAll_1'
-
+output.dir <- paste(input.dir,'RandomizationDetections/TrainingDataAll_1',sep='')
+  
 feature.df <- trainingdata
 
 gibbonR(input=WavFileNames,
@@ -170,7 +174,7 @@ gibbonR(input=WavFileNames,
 
 
 # Automated detection and classification all training data + females added ----------------------------------
-trainingdata <- MFCCFunction(input.dir= "/Users/denaclink/Desktop/RStudio Projects/Gibbon-automated-detection/TrainingFilesValidatedAddFemales/", min.freq = 500, max.freq = 1600)
+trainingdata <- MFCCFunction(input.dir= paste(input.dir,'TrainingFilesValidatedAddFemales',sep=''), min.freq = 500, max.freq = 1600)
 
 trainingdata$class <- as.factor(trainingdata$class)
 
@@ -183,7 +187,7 @@ trainingdata$class <- plyr::revalue(trainingdata$class,
 # 
 trainingdata$class <- as.factor(trainingdata$class)
 
-output.dir <- '/Users/denaclink/Desktop/RStudio Projects/Workflow-for-automated-detection-and-classification-gibbon-calls/gibbonRoutputRandomIterations5s/TrainingDataFemalesAdded_1'
+output.dir <- output.dir <- paste(input.dir,'RandomizationDetections/TrainingDataFemalesAdded_1',sep='')
 
 feature.df <- trainingdata
 

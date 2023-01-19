@@ -7,10 +7,10 @@ This is the code for Clink et al. 2023 (full citation below). Please
 cite this publication if using or reproducing any of the code or figures
 included here.
 
-Clink, D. J., Comella, I.A.\*, Ahmad, A.H. & H. Klinck. (2023). A
-workflow for the automated detection and classification of female gibbon
-calls from long-term acoustic recordings. Frontiers in Ecology and
-Evolution. 11:1071640. doi: 10.3389/fevo.2023.1071640
+Clink, D. J., Kier, I.A.\*, Ahmad, A.H. & H. Klinck. (2023). A workflow
+for the automated detection and classification of female gibbon calls
+from long-term acoustic recordings. Frontiers in Ecology and Evolution.
+11:1071640. doi: 10.3389/fevo.2023.1071640
 
 ### Part 1. Random iterations
 
