@@ -1,5 +1,6 @@
 library(gibbonR)
 
+# Prepare the data -------------------------
 # Set input directory for data and sound files
 # NOTE: You must change this to the location where you have stored the downloaded data
 input.dir <- '/Volumes/DJC Files/Clink et al Zenodo Data/'
@@ -26,7 +27,6 @@ Filename <- str_split_fixed(AnnotatedFiles,pattern = '.Table',n=2)[,1]
 # List wave files
 WavFileNames <- list.files(wavfile.dir,recursive = T,full.names = T)
 
-# Divide training dataset into smaller increments -------------------------
 # Determine number of training samples
 n.files <- 
   length(list.files(training.file.directory))
