@@ -1,0 +1,43 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Workflow-for-automated-detection-and-classification-gibbon-calls
+
+This is the code for Clink et al. 2023 (full citation below). Please cite this publication if using or reproducing any of the code or figures included here.
+
+
+Clink, D. J., Comella, I.A.*, Ahmad, A.H. & H. Klinck. (2023). A workflow for the automated detection and classification of female gibbon calls from long-term acoustic recordings. Frontiers in Ecology and Evolution. 11:1071640. doi: 10.3389/fevo.2023.1071640
+
+### Part 1. Random iterations
+This code 
+
+### Part 2. Performance metrics on validation dataset
+
+### Part 3. Performance metrics on test dataset
+
+### Part 4. Compare manual and automated annotations
+
+### Part 5. Unsupervised clustering of true/false positives
+
+### Part 6. Unsupervised clustering of female calls
+
+### Part 7. Female call exemplar plots
+
+
+
+
+```{r , echo = FALSE}
+
+```
+
+
