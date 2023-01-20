@@ -5,7 +5,7 @@ library(reshape2)
 library(dplyr)
 library(gibbonR)
 library(bbmle)
-
+library(flextable)
 
 # Data Preparation --------------------------------------------------------
 # Set input directory for data and sound files
@@ -340,77 +340,88 @@ anova(lm1)
 
 
 # Model selection for F1 score --------------------------------------------
-
+# Assign to new object
 performance.df <- ROCRPerformanceDFCombined
 
+# Rename factor levels
 performance.df$TrainingDataSplit <- 
   factor(performance.df$TrainingDataSplit,levels=c('Subset10', "Subset20","Subset40",
                                                                            "Subset80","Subset160","Subset320","Subset400",
                                                                            "TrainingDataAll","TrainingDataFemalesAdded"))
 
-
+# Reorder factor levels
 levels(performance.df$TrainingDataSplit) <-  c("n=10","n=20","n=40",
                                           "n=80","n=160","n=320", "n=400","All","All + F")#
 
 
+# Make n=160 reference category
 performance.df <- within(performance.df, TrainingDataSplit <- relevel(TrainingDataSplit, ref = "n=160"))
+
+# Convert algorithm to factor
 performance.df$MLAlgo <- as.factor(performance.df$MLAlgo)
 
-lm1 <- lm(F1 ~ TrainingDataSplit*MLAlgo , data=performance.df)
-#lm1inter <- lm(AUC ~ TrainingData*Algorithm , data=auc.df)
-lmnull <- lm(F1 ~ 1 , data=performance.df)
-bbmle::AICctab(lmnull,lm1,weights=T)
+# Create full model for F1
+lm1F1 <- lm(F1 ~ TrainingDataSplit+MLAlgo , data=performance.df)
 
-F1coef<- sjPlot::plot_model(lm1,sort.est =T)+ylim(-0.25,0.25)+ geom_hline(yintercept = 0)+theme_bw()+scale_color_manual(values= c("#0080FF", "#FF8000") )
+# Create null model for F1
+lmnullF1 <- lm(F1 ~ 1 , data=performance.df)
 
+# Model selection using AIC
+bbmle::AICctab(lmnullF1,lm1F1,weights=T)
+
+# Create coefficient plot
+F1coef<- sjPlot::plot_model(lm1F1,sort.est =T)+ylim(-0.25,0.25)+ geom_hline(yintercept = 0)+theme_bw()+scale_color_manual(values= c("#0080FF", "#FF8000") )
+
+# Combine coefficient plots
 cowplot::plot_grid(AUCcoef,F1coef)
 
+
+# F1 plot by probability and training data --------------------------------
+
+# Remove iteration index value from training data labels
 performance.df$TrainingData <- str_split_fixed(performance.df$TrainingData,
                                                pattern = '_',n=2)[,1]
 
+# Convert to factor
 performance.df$TrainingData <- as.factor(performance.df$TrainingData)
 
-
-
+# Convert probability to numeric
 TempProb <-  str_split_fixed(performance.df$Probability, pattern = ',',n=2)[,2]
 TempProb <-  str_split_fixed(TempProb, pattern = ']',n=2)[,1]
-
 performance.df$Threshold <- as.numeric( TempProb )
 
+# Remove NA
 performance.df <- na.omit( performance.df )
 
+# New column with name 'Algorithm' for plotting
 performance.df$Algorithm <-performance.df$MLAlgo
 
+# Calculate mean value for each algorithm, training data, and probability threshold
 performance.dfF1 <- performance.df %>% 
   group_by(Algorithm,TrainingData,Threshold) %>% 
   summarize(mean=mean(F1),sd=sd(F1)
   )
 
+# Convert training data to factor
 performance.dfF1$TrainingData <- as.factor(performance.dfF1$TrainingData )
 
-
-
+# Create new labels for plotting
 levels(performance.dfF1$TrainingData) <-  c("n=10","n=20","n=40",
                                             "n=80","n=160","n=320", "n=400","All","All + F")#
 
-
+# Convert threshold to numerica
 performance.dfF1$Threshold <- as.numeric(performance.dfF1$Threshold)
 
-
+# Create plot
 ggline(data=performance.dfF1,
        x='Threshold',y='mean',group  = 'TrainingData',color='TrainingData',shape='TrainingData',
        facet.by = 'Algorithm')+
   scale_color_manual(values= matlab::jet.colors(length(unique(performance.dfF1$TrainingData))) )+
   ylab('F1 score')+ylim(0,1)+geom_hline(yintercept = max(performance.dfF1$mean),lty='dashed')
 
-performance.dfF1[which.max(performance.dfF1$mean),]
+# Summarize output using flextable --------------------------------------------------------
 
-subset(performance.dfF1,mean > 0.79)
-# Summarize output --------------------------------------------------------
-
-library(dplyr)
-
-
+# Calculate median and SD for precision, recall and F1
 PerformanceDFSummary <- performance.df %>%
   group_by(TrainingData,Algorithm,Probability = cut(Threshold, breaks = seq(0, max(Threshold), 0.25))) %>%
   summarise(PrecisionMed = median(prec),
@@ -421,31 +432,35 @@ PerformanceDFSummary <- performance.df %>%
             F1SD = sd(F1)
   )
 
+# Calculate median and SD for AUC
 auc.dfSummary <- auc.df %>%
   group_by(TrainingData,MLAlgo) %>%
   summarise(AUCMed = median(AUC),
             AUCSD = sd(AUC)
   )
 
+# Round output for table
 auc.dfSummary[,c('AUCMed','AUCSD')] <- round(auc.dfSummary[,c('AUCMed','AUCSD')],2)
 
+# Create new mean ± SD column 
 auc.dfSummary$AUCMSD <- paste(auc.dfSummary$AUCMed,
                               "±",auc.dfSummary$AUCSD)
 
-
+# Combine into flex table
 AucTable <- flextable::flextable(auc.dfSummary)
 
+# Merge columns
 AucTable_merge <- flextable::merge_v(AucTable, j = c("TrainingData", "MLAlgo"))
 
 
-
+# Round values for table
 PerformanceDFSummary[,c("PrecisionMed", 
                         "PrecisionSD", "RecallMed", "RecallSD", "F1Med", "F1SD")] <- 
   
   round(PerformanceDFSummary[,c("PrecisionMed", 
                                 "PrecisionSD", "RecallMed", "RecallSD", "F1Med", "F1SD")],2)
 
-
+# Create new mean ± SD
 PerformanceDFSummary$PrecisionMSD <- paste(PerformanceDFSummary$PrecisionMed,
                                            "±",PerformanceDFSummary$PrecisionSD)
 
@@ -455,25 +470,25 @@ PerformanceDFSummary$RecallMSD <- paste(PerformanceDFSummary$RecallMed,
 PerformanceDFSummary$F1MSD <- paste(PerformanceDFSummary$F1Med,
                                     "±",PerformanceDFSummary$F1SD)
 
-
-
-
+# Subset so focus on probability > 0.5
 PerformanceDFSummary <- 
   subset(PerformanceDFSummary,Probability== '(0.5,0.75] ' | Probability== '(0.75,1]' )
 
-
+# Re order levels
 levels(PerformanceDFSummary$TrainingData) <-  c("n=10","n=20","n=40",
                                                 "n=80","n=160","n=320", "n=400","All","All + F")#
 
-
+# Reorder dataframe based on training data
 PerformanceDFSummary <- PerformanceDFSummary[order(PerformanceDFSummary$TrainingData),]
 order(PerformanceDFSummary$TrainingData)
 
+# Combine together
 PerformanceDFSummary <- cbind.data.frame(PerformanceDFSummary,auc.dfSummary$AUCMSD)
 
-library(flextable)
-
+# Convert to flextable
 PerformanceTable <- flextable::flextable(PerformanceDFSummary[,c("TrainingData", "Algorithm",'PrecisionMSD','RecallMSD','F1MSD','auc.dfSummary$AUCMSD')])
+
+# Create labels for table
 PerformanceTable <- set_header_labels(PerformanceTable,
                         TrainingData = "Training Data",
                         Algorithm = "Algorithm", 
@@ -483,9 +498,14 @@ PerformanceTable <- set_header_labels(PerformanceTable,
                         `auc.dfSummary$AUCMSD` = "AUC (mean ± sd)"
 )
 
+# Merge
 ft_merge <- merge_v(PerformanceTable, j = c("TrainingData", "Algorithm"))
+
+# Print
 ft_merge
-#save_as_docx(ft_merge,path='PerformanceSummaryTableA_20221208.docx')
+
+# Option to save as a word document
+#save_as_docx(ft_merge,path='PerformanceSummaryTable.docx')
 
 
 
