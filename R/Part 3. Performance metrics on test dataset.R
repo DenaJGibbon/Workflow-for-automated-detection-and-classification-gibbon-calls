@@ -6,43 +6,32 @@ library(reshape2)
 library(dplyr)
 
 # # Link .wav files to selection tables -----------------------------------
+# Get input directory for data and sound files
+# NOTE: You must change this to the location where you have stored the downloaded data
+input.dir <- '/Volumes/DJC Files/Clink et al Zenodo Data/'
 
-AnnotatedFiles <- list.files("Data/AnnotatedFilesTest/")
-AnnotatedFilesFull <- list.files("Data/AnnotatedFilesTest/",full.names = T)
+# Get directory to location of .wav files
+wavfile.dir <- paste(input.dir,'ValidationSoundFiles',sep='')
 
-Filename <- str_split_fixed(AnnotatedFiles,pattern = '.Table',n=2)[,1]
-ListofWavs <- list.files('/Volumes/Dena Clink Toshiba 3 TB/SWIFT_sparse_array_Danum/',recursive = T,full.names = T)
+# Link to annotated selection tables 
+AnnotatedFiles <- list.files( paste(input.dir,'AnnotatedFilesTest',sep=''))
 
-ListIndex <- lapply(1:length(Filename),
-                    function(x)
-                      which(str_detect(ListofWavs,Filename[x])))
+# Find full file path of annotated selection tables
+AnnotatedFilesFull <- list.files(paste(input.dir,'AnnotatedFilesTest',sep=''),
+                                 full.names = T)
 
-WavFileNames <- ListofWavs[unlist(ListIndex)]
+# List wave files
+WavFileNames <- list.files(wavfile.dir,recursive = T,full.names = T)
 
+# Read in .csv
+trainingdata <- read.csv(paste(input.dir,'DataSheets/MFCCTrainingAllSamples.csv',sep=''))
 
-# # Add in all training data and female added
-# subset.directory <- "/Volumes/Dena Clink Toshiba 3 TB/gibbonRandomDetections/TrainingSVMRF_all/Subset400_8"
-# 
-# trainingdata <- MFCCFunction(input.dir= subset.directory, min.freq = 500, max.freq = 1600)
-# 
-# trainingdata$class <- as.factor(trainingdata$class)
-# 
-# trainingdata$class <- plyr::revalue(trainingdata$class,
-#                                     c('duet'='female.gibbon',
-#                                       'hornbill.helmeted'='noise',
-#                                       'hornbill.rhino'='noise',
-#                                       'long.argus'='noise',
-#                                       'short.argus'='noise'))
-#
-
-#write.csv(trainingdata,'MFCCTrainingSamples_400_8.csv',row.names = F)
-
-trainingdata <- read.csv('MFCCTrainingAllSamples.csv')
-#trainingdata <- read.csv('MFCCTrainingSamples_400_8.csv')
+# Convert class to a factor
 trainingdata$class <- as.factor(trainingdata$class)
 # 
 # # Run detector/classifier over list of wav files --------------------------
-# output.dir <- 'Data/TestOutput5s400Samples/'
+# Below is the code to run the detector/classifier over the test data
+# output.dir <- 'Data/'
 # 
 # feature.df <- trainingdata
 # 
@@ -71,22 +60,14 @@ trainingdata$class <- as.factor(trainingdata$class)
 # 
 
 
-
-# Version 7: Use only ROCR
-# Version 6: Use updated annotations tables
-
 # Data Preparation --------------------------------------------------------
 
 # Link to gibbonR output selection tables
-RandomIterFolders <-list.files("Data/TestOutput5s/",
+RandomIterFolders <-list.files(paste(input.dir,'TestOutput5s',sep=''),
                                full.names = T)
 
-RandomIterFoldersShort <-list.files("Data/TestOutput5s/",
+RandomIterFoldersShort <-list.files(paste(input.dir,'TestOutput5s',sep=''),
                                full.names = F)
-
-# Link to annotated sound files
-AnnotatedFiles <- list.files("Data/AnnotatedFilesTest/")
-AnnotatedFilesFull <- list.files("Data/AnnotatedFilesTest/",full.names = T)
 
 # Determine file names from annotated file names
 nslash <- str_count(AnnotatedFilesFull,pattern = '/')[1]+1
@@ -122,19 +103,26 @@ for(x in 1:length(AnnotatedFilesFull)){
 humanannotations$Call.type <- 
   ifelse(humanannotations$Call.type=='female.gibbon','female.gibbon','noise')
 
+# Remove all non gibbon female annotations
 humanannotations <- droplevels(subset(humanannotations,Call.type=='female.gibbon'))
 
+# Isolate file names
 RandomFiles <- str_split_fixed(RandomIterFoldersShort,pattern = 'gibbonR',n=2)[,1]
 AnnotatedFiles.Notxt <- str_split_fixed(AnnotatedFiles,pattern = '.Table',n=2)[,1]
 
+# Find matching text and sound files
 RandomIterFolders <- 
   RandomIterFolders[(RandomFiles %in% AnnotatedFiles.Notxt)]
 
+# Find matching text and sound files
 RandomIterFoldersShort <- 
   RandomIterFoldersShort[(RandomFiles %in% AnnotatedFiles.Notxt)]
 
 
 # Match automated detections --------------------------------------------------------------
+# Set start and stop times to be considered detections
+range.secs.start <- 4
+range.secs.end <- 2
 
 RandomDetectionsDF  <- data.frame()
 
@@ -142,8 +130,6 @@ for(k in 1:length(RandomIterFolders)){
   print(k)
   # Select the folder
   output.dir <- RandomIterFolders[k]
-  range.secs.start <- 4
-  range.secs.end <- 2
   
   # List short and long file names
   RandomSelectionTables <-  RandomIterFolders[k]
@@ -259,33 +245,12 @@ for(k in 1:length(RandomIterFolders)){
       
     }
     
-   # CombinedDetectionDF$trainingdata <- ListTrainingDirectories[k]
-    
     RandomDetectionsDF <- rbind.data.frame(CombinedDetectionDF,RandomDetectionsDF)
   }
 }
 
-RandomDetectionsDFAUC <- subset(RandomDetectionsDF,model.type=='SVM'& probability >0)#
-
-RandomDetectionsDF <- subset(RandomDetectionsDF,model.type=='SVM'& probability >0.97)#
-
-FalseNegative <- nrow(subset(RandomDetectionsDF,class.label==0 & actual.label ==1))
-TruePositive  <-  nrow(subset(RandomDetectionsDF,class.label==1 & actual.label ==1))
-FalsePositive  <-  nrow(subset(RandomDetectionsDF,class.label==1 & actual.label ==0 ))
-
-Precision <- TruePositive/ (TruePositive+ FalsePositive)
-Precision
-
-Recall <- TruePositive/ nrow(humanannotations)
-Recall
-
-F1 <-2 * (Precision * Recall) / (Precision + Recall)
-F1
-
-# RF Precision: 0.77; Recall: 0.79
-# SVM Precision: 0.77; Recall: 0.79
-
-#RandomDetectionsDF <- subset(RandomDetectionsDF,model.type=='RF')
+# Subset so only focus on SVM
+RandomDetectionsDFAUC <- subset(RandomDetectionsDF,model.type=='SVM')
 
 # Create a vector of probabilities
 predictions <- as.numeric(RandomDetectionsDFAUC$probability)
@@ -305,13 +270,13 @@ auc
 # Calculate F1; harmonic mean of precision and recall
 perfF1 <- performance(pred, "f")
 
+# isolate F1 
 F1 <-  perfF1@y.values[[1]]
-maxindex <- which.max(na.omit(F1))
-max(na.omit(F1))
+
+# Find which probability has highest F1
 Probability <- perfF1@x.values[[1]]
 Probability[maxindex]
 
-perf <- performance(pred, "prec","rec")
-perf@x.values[[1]][maxindex]
-perf@y.values[[1]][maxindex]
-
+# What is the max F1
+maxindex <- which.max(na.omit(F1))
+max(na.omit(F1))

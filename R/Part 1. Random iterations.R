@@ -1,7 +1,7 @@
 library(gibbonR)
 
 # Prepare the data -------------------------
-# Set input directory for data and sound files
+# Get input directory for data and sound files
 # NOTE: You must change this to the location where you have stored the downloaded data
 input.dir <- '/Volumes/DJC Files/Clink et al Zenodo Data/'
 
@@ -12,7 +12,7 @@ wavfile.dir <- paste(input.dir,'ValidationSoundFiles',sep='')
 training.file.directory <- paste(input.dir,'TrainingFilesValidated',sep='')
 
 # Set output directory for detection files
-detection.output.dir <- paste(input.dir,'RandomizationDetections',sep='')
+detection.output.dir <- paste(input.dir,'RandomizationDetections/',sep='')
 
 # Link to annotated selection tables 
 AnnotatedFiles <- list.files( paste(input.dir,'AnnotatedFilesValidation',sep=''))
@@ -56,16 +56,22 @@ noise.training <- which(trainingdataID!='duet')
 subset.vals <- c(10,20,40,80,160,320,400)
 
 # Automated detection and classification over random iterations ----------------------------------
+# NOTE: this will take a very long time to run so it is currently set to do just one iteration
+
 # Loop to randomly sample training data over 10 iterations 
-for(z in 1:10){
-for(a in 1:length(subset.vals)){
+for(z in 1:1){
+  for(a in 1:1){
+
+# To run all the iterations remove comments below and comment out lines above
+# for(z in 1:10){
+#   for(a in 1:length(subset.vals)){
   print(paste('processing',z, 'out of 10 for subset',subset.vals[a] ))
   subset.val <- subset.vals[a]
   duet.subset <- duet.training[sample(1:length(duet.training),subset.val,replace = F)]
   noise.subset <- noise.training[sample(1:length(noise.training),subset.val,replace = F)]
   combined.subset <- c(duet.subset,noise.subset)
   
-  subset.directory <- paste('Data/Subset',subset.val,'_',z,sep='')
+  subset.directory <- paste(input.dir,'RandomizationSubset/Subset',subset.val,'_',z,sep='')
   
   if (!dir.exists(subset.directory)){
     dir.create(subset.directory)
