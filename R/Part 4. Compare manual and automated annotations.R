@@ -7,12 +7,9 @@ library(ggpubr)
 # NOTE: You must change this to the location where you have stored the downloaded data
 input.dir <- '/Volumes/DJC Files/Clink et al Zenodo Data/'
 
-# Get directory to location of .wav files
-wavfile.dir <- paste(input.dir,'TrueFalsePositiveTables',sep='')
-
 # Get full file paths
 ValidationTables <- 
-  list.files(paste(input.dir,'TrueFalsePositiveTables',sep=''),
+  list.files(paste(input.dir,'DataSheets/TrueFalsePositiveTables',sep=''),
              full.names = T)
 
 # Combine tables into a dataframe
@@ -87,7 +84,7 @@ ValidationDFupdated$TempStartTime <- str_split_fixed(ValidationDFupdated$TempSta
 ValidationDFupdated$TempStartHour <- str_split_fixed(ValidationDFupdated$TempStartTime,pattern = ':',n=2)[,1]
 
 
-gibbon.files <- list.files(paste(input.dir,'GibbonAnnotationsLTSA',sep=''),full.names = T)
+gibbon.files <- list.files(paste(input.dir,'DataSheets/GibbonAnnotationsLTSA',sep=''),full.names = T)
 gibbon.files.short <- list.files("/Users/denaclink/Desktop/LTSA_detections/gibbons",full.names = F)
 Recorder.gibbon <- str_split_fixed(gibbon.files.short,pattern = '_',n=2)[,1]
 gibbon.annotations <- data.frame()

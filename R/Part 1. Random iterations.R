@@ -15,10 +15,10 @@ training.file.directory <- paste(input.dir,'TrainingFilesValidated',sep='')
 detection.output.dir <- paste(input.dir,'RandomizationDetections/',sep='')
 
 # Link to annotated selection tables 
-AnnotatedFiles <- list.files( paste(input.dir,'AnnotatedFilesValidation',sep=''))
+AnnotatedFiles <- list.files( paste(input.dir,'DataSheets/AnnotatedFilesValidation',sep=''))
 
 # Find full file path of annotated selection tables
-AnnotatedFilesFull <- list.files(paste(input.dir,'AnnotatedFilesValidation',sep=''),
+AnnotatedFilesFull <- list.files(paste(input.dir,'DataSheets/AnnotatedFilesValidation',sep=''),
                                  full.names = T)
 
 # Isolate the file name

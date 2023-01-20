@@ -21,8 +21,8 @@ ListTrainingDirectories <-list.files(paste(input.dir,'gibbonRoutputRandomIterati
                                      full.names = F)
 
 # Link to annotated sound files
-AnnotatedFiles <- list.files( paste(input.dir,'AnnotatedFilesValidation',sep=''))
-AnnotatedFilesFull <- list.files( paste(input.dir,'AnnotatedFilesValidation',sep=''),
+AnnotatedFiles <- list.files( paste(input.dir,'DataSheets/AnnotatedFilesValidation',sep=''))
+AnnotatedFilesFull <- list.files( paste(input.dir,'DataSheets/AnnotatedFilesValidation',sep=''),
                                   full.names = T)
 
 # Determine file names from annotated file names

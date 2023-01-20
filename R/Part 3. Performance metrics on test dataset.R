@@ -14,10 +14,10 @@ input.dir <- '/Volumes/DJC Files/Clink et al Zenodo Data/'
 wavfile.dir <- paste(input.dir,'ValidationSoundFiles',sep='')
 
 # Link to annotated selection tables 
-AnnotatedFiles <- list.files( paste(input.dir,'AnnotatedFilesTest',sep=''))
+AnnotatedFiles <- list.files( paste(input.dir,'DataSheets/AnnotatedFilesTest',sep=''))
 
 # Find full file path of annotated selection tables
-AnnotatedFilesFull <- list.files(paste(input.dir,'AnnotatedFilesTest',sep=''),
+AnnotatedFilesFull <- list.files(paste(input.dir,'DataSheets/AnnotatedFilesTest',sep=''),
                                  full.names = T)
 
 # List wave files

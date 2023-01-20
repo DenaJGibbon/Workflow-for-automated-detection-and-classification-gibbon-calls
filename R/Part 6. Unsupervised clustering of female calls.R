@@ -13,10 +13,13 @@ library(ggpubr)
 set.seed(14)
 
 # True and False Positives ------------------------------------------------
+# NOTE: You must change this to the location where you have stored the downloaded data
+input.dir <- '/Volumes/DJC Files/Clink et al Zenodo Data/'
+
 subset.directory <-paste(input.dir,'UpdatedDanumDetectionsHQ99',sep='')
 
 trainingdata <- gibbonR::MFCCFunction(input.dir=subset.directory , min.freq = 500, max.freq = 1500,
-                                       n.windows=9, win.avg = 'standard')
+                                      n.windows=9, win.avg = 'standard')
 
 traningdatanames <- list.files(subset.directory,
                                full.names = F,pattern = '.wav')
@@ -62,13 +65,13 @@ trainingdata[AcousticSignalsAPFemales@exemplars,]
 
 
 for(a in 1:length(AcousticSignalsAPFemales@exemplars)){
-png(paste(subset.directory,'Exemplars',a,'.png'),width = 1440, height = 960,res = 250)
-#par(mfrow=c(5,2))
-temp.name <- traningdatanamesfull[AcousticSignalsAPFemales@exemplars[a]]
-temp.name.short <- traningdatanames[AcousticSignalsAPFemales@exemplars[a]]
-temp.name.short.recorder <- str_split_fixed(temp.name.short,pattern = '_',n=3)[,2]
+  png(paste(input.dir,'Exemplars/exemplar',a,'.png',sep=''),width = 1440, height = 960,res = 250)
+  #par(mfrow=c(5,2))
+  temp.name <- traningdatanamesfull[AcousticSignalsAPFemales@exemplars[a]]
+  temp.name.short <- traningdatanames[AcousticSignalsAPFemales@exemplars[a]]
+  temp.name.short.recorder <- str_split_fixed(temp.name.short,pattern = '_',n=3)[,2]
   short.wav <-readWave(temp.name)
-
+  
   if(a==5 |a== 6 |a==7 |a== 8 ){
     dynamicrange =45
   } else{
@@ -76,7 +79,7 @@ temp.name.short.recorder <- str_split_fixed(temp.name.short,pattern = '_',n=3)[,
   }
   phonTools::spectrogram(sound=short.wav@left,fs=short.wav@samp.rate,maxfreq = 1500,windowlength = 25,dynamicrange=dynamicrange,
                          maintitle = paste('Exemplar for Cluster',a,'from recorder',temp.name.short.recorder))
-graphics.off()
+  graphics.off()
 }
 
 
@@ -90,4 +93,11 @@ gibbonID(input.dir=subset.directory,
          win.avg='standard',class='affinity.fixed', q.fixed=0.2,add.spectrograms=TRUE,min.freq=500,max.freq=1500,
          spec.ratio=30)
 
- 
+
+
+NewDataFrame <- cbind.data.frame(trainingdata$Class,AcousticSignalsAPFemales@idx)
+colnames(NewDataFrame) <- c('Recorder','Cluster')
+NewDataFrame$Cluster <- as.factor(NewDataFrame$Cluster)
+
+levels(NewDataFrame$Cluster) <- seq(1,length(AcousticSignalsAPFemales@exemplars),1)
+
