@@ -4,21 +4,26 @@ library(ggpubr)
 library(reshape2)
 library(dplyr)
 library(gibbonR)
+library(bbmle)
 
 
 # Data Preparation --------------------------------------------------------
+# Set input directory for data and sound files
+# NOTE: You must change this to the location where you have stored the downloaded data
+input.dir <- '/Volumes/DJC Files/Clink et al Zenodo Data/'
 
 # Link to gibbonR output selection tables
-RandomIterFolders <-list.files("Data/gibbonRoutputRandomIterations5s/",
+RandomIterFolders <-list.files(paste(input.dir,'gibbonRoutputRandomIterations5s',sep=''),
                                full.names = T)
 
 # Get just the names of the folders
-ListTrainingDirectories <-list.files("Data/gibbonRoutputRandomIterations5s/",
+ListTrainingDirectories <-list.files(paste(input.dir,'gibbonRoutputRandomIterations5s',sep=''),
                                      full.names = F)
 
 # Link to annotated sound files
-AnnotatedFiles <- list.files("Data/AnnotatedFilesValidation/")
-AnnotatedFilesFull <- list.files("Data/AnnotatedFilesValidation/",full.names = T)
+AnnotatedFiles <- list.files( paste(input.dir,'AnnotatedFilesValidation',sep=''))
+AnnotatedFilesFull <- list.files( paste(input.dir,'AnnotatedFilesValidation',sep=''),
+                                  full.names = T)
 
 # Determine file names from annotated file names
 nslash <- str_count(AnnotatedFilesFull,pattern = '/')[1]+1
@@ -48,17 +53,21 @@ for(x in 1:length(AnnotatedFilesFull)){
 humanannotations$Call.type <- 
   ifelse(humanannotations$Call.type=='female.gibbon','female.gibbon','noise')
 
+# Drop all non gibbon female annotations
 humanannotations <- droplevels(subset(humanannotations,Call.type=='female.gibbon'))
 
 # Match automated detections --------------------------------------------------------------
+# Set number of seconds before/after to be considered a detection
+range.secs.start <- 4
+range.secs.end <- 2
+
+# Loop over randomized detection folders
 RandomDetectionsDF  <- data.frame()
 
 for(k in 1:length(RandomIterFolders)){ 
   print(k)
   # Select the folder
   output.dir <- RandomIterFolders[k]
-  range.secs.start <- 4
-  range.secs.end <- 2
   
   # List short and long file names
   RandomSelectionTables <- list.files(output.dir,full.names = T)
@@ -66,80 +75,82 @@ for(k in 1:length(RandomIterFolders)){
   
   for(j in 1:length(RandomSelectionTables)){
 
-    # Read in temporary selection table
-gibbonRoutput <- 
-  read.delim(RandomSelectionTables[j])
-
-# Identify the recording ID
-recordingID <- str_split_fixed(RandomSelectionTablesShort[j],pattern = 'gibbonR',n=2)[,1]
-
-# Subset based on the recording ID
-humanannotationsSub <- subset(humanannotations,file.name==recordingID)
-
-# Subset female.gibbon annotations
-humanannotationsSub <- subset(humanannotationsSub,Call.type=='female.gibbon')
-
-# In some cases the recordings had zero gibbon females so we need to determine how many rows
-if(nrow(humanannotationsSub)>0){
+      # Read in temporary selection table
+  gibbonRoutput <- 
+    read.delim(RandomSelectionTables[j])
   
-  # Subset based on model type
-uniqueML <- unique(gibbonRoutput$model.type)
-
-# Loop over each ML algorithm and annotation row to match calls
-matched.annotations.df <- data.frame()
-dataframe.to.find.false.positives <- data.frame()
-
-for(a in 1:length(uniqueML)){
-  # Prepare gibbonR output data 
-  gibbonRoutputsub <- subset(gibbonRoutput,model.type==uniqueML[a])
-  gibbonRoutputsub <- subset(gibbonRoutputsub,File.Name==recordingID)
-  signal <- unique(gibbonRoutputsub$signal)
-  File.Name <- unique(gibbonRoutputsub$File.Name)
+  # Identify the recording ID
+  recordingID <- str_split_fixed(RandomSelectionTablesShort[j],pattern = 'gibbonR',n=2)[,1]
   
-  # For each row in the annotated file match the corresponding detections
-  for(b in 1:nrow(humanannotationsSub)){
-  humanannotationsSub.subset <-  humanannotationsSub[b,]
-
-  min.start.time <- as.numeric(humanannotationsSub.subset$Begin.Time..s.)-range.secs.start
-  max.start.time <- as.numeric(humanannotationsSub.subset$End.Time..s.)+range.secs.end
+  # Subset based on the recording ID
+  humanannotationsSub <- subset(humanannotations,file.name==recordingID)
   
-  detections.ml <- subset(gibbonRoutputsub, Begin.Time..s. > min.start.time & End.Time..s.< max.start.time)
-  if(nrow(detections.ml) > 1){
-    print(detections.ml)
-    print(a)
-    print(b)
-  }
+  # Subset female.gibbon annotations
+  humanannotationsSub <- subset(humanannotationsSub,Call.type=='female.gibbon')
   
-  # If there is a detection
-  if(nrow(detections.ml) > 0){
+  # In some cases the recordings had zero gibbon females so we need to determine how many rows
+  if(nrow(humanannotationsSub)>0){
     
-    DetectionsOver50 <- subset(detections.ml,probability > 0.5)
-    if(nrow(DetectionsOver50)>0){    
-    class.label <- c('1')
-    model.type <- uniqueML[a]
-    probability <- median(DetectionsOver50$probability)
-    actual.label <- c('1')
-    temprow <- cbind.data.frame(humanannotationsSub.subset,model.type,probability,class.label,actual.label,signal,File.Name)
+  # Subset based on model type (SVM or RF)
+  uniqueML <- unique(gibbonRoutput$model.type)
+  
+  # Create empty dataframes to fill in the loop
+  matched.annotations.df <- data.frame()
+  dataframe.to.find.false.positives <- data.frame()
+ 
+  # Loop over each ML algorithm and annotation row to match calls
+  
+  for(a in 1:length(uniqueML)){
+    # Prepare detector output data 
+    gibbonRoutputsub <- subset(gibbonRoutput,model.type==uniqueML[a])
+    gibbonRoutputsub <- subset(gibbonRoutputsub,File.Name==recordingID)
+    signal <- unique(gibbonRoutputsub$signal)
+    File.Name <- unique(gibbonRoutputsub$File.Name)
     
-    dataframe.to.find.false.positives <- rbind.data.frame(dataframe.to.find.false.positives,DetectionsOver50)
-    } else{
+    # For each row in the annotated file match the corresponding detections
+    for(b in 1:nrow(humanannotationsSub)){
+    humanannotationsSub.subset <-  humanannotationsSub[b,]
+  
+    min.start.time <- as.numeric(humanannotationsSub.subset$Begin.Time..s.)-range.secs.start
+    max.start.time <- as.numeric(humanannotationsSub.subset$End.Time..s.)+range.secs.end
+    
+    detections.ml <- subset(gibbonRoutputsub, Begin.Time..s. > min.start.time & End.Time..s.< max.start.time)
+    if(nrow(detections.ml) > 1){
+      print(detections.ml)
+      print(a)
+      print(b)
+    }
+    
+    # If there is a detection
+    if(nrow(detections.ml) > 0){
+      
+      DetectionsOver50 <- subset(detections.ml,probability > 0.5)
+      if(nrow(DetectionsOver50)>0){    
+      class.label <- c('1')
+      model.type <- uniqueML[a]
+      probability <- median(DetectionsOver50$probability)
+      actual.label <- c('1')
+      temprow <- cbind.data.frame(humanannotationsSub.subset,model.type,probability,class.label,actual.label,signal,File.Name)
+      
+      dataframe.to.find.false.positives <- rbind.data.frame(dataframe.to.find.false.positives,DetectionsOver50)
+      } else{
+        class.label <- c('0')
+        model.type <- uniqueML[a]
+        probability <- c('0.0')
+        actual.label <- c('1')
+        temprow <- cbind.data.frame(humanannotationsSub.subset,model.type,probability,class.label,actual.label,signal,File.Name)
+      }
+      # If there was not a detection assign the annotation a false negative value
+      } else {
       class.label <- c('0')
       model.type <- uniqueML[a]
       probability <- c('0.0')
       actual.label <- c('1')
       temprow <- cbind.data.frame(humanannotationsSub.subset,model.type,probability,class.label,actual.label,signal,File.Name)
     }
-    # If there was not a detection assign the annotation a false negative value
-    } else {
-    class.label <- c('0')
-    model.type <- uniqueML[a]
-    probability <- c('0.0')
-    actual.label <- c('1')
-    temprow <- cbind.data.frame(humanannotationsSub.subset,model.type,probability,class.label,actual.label,signal,File.Name)
+    matched.annotations.df <- rbind.data.frame(matched.annotations.df,temprow)
   }
-  matched.annotations.df <- rbind.data.frame(matched.annotations.df,temprow)
-}
-}
+  }
 
 # Create ID of true positives 
 dataframe.to.find.false.positives.id <- paste(dataframe.to.find.false.positives$File.Name,dataframe.to.find.false.positives$model.type,
@@ -156,7 +167,7 @@ false.positive.detections  <-
       gibbonRoutput[ -FalsePositiveRemove,]
 
 # Need to add true negatives; this takes all the remaining detections and assigns them either 
-# a 0 or 1 based on the 50% threshold - if the probability is over 50% then the model classified as a gibbon
+#  0 or 1 based on the 50% threshold - if the probability is over 50% then the model classified as a gibbon
 false.positive.detections$class.label <- ifelse(false.positive.detections$probability> 0.5, '1', '0')
 
 # Since we removed the true positives all the remaining are not gibbons
@@ -266,68 +277,69 @@ for(a in 1:length(TrainingData)){
   }
 }
 
-ROCRPerformanceDFCombined40 <- subset(ROCRPerformanceDFCombined,TrainingDataSplit=='Subset40' & Probability =='(0.5,0.6]'&MLAlgo=='SVM')
-
-Aggregated <- aggregate(ROCRPerformanceDFCombined400$F1, list(ROCRPerformanceDFCombined400$TrainingData), FUN=mean)
-mean(Aggregated$x)
+# remove any NA values
 ROCRPerformanceDFCombined <- na.omit(ROCRPerformanceDFCombined)
 
+# Create histogram of recall
 hist(ROCRPerformanceDFCombined$rec)
 
+# Create column indicating training data samples
 ROCRPerformanceDFCombined$TrainingDataSplit <-
   str_split_fixed(ROCRPerformanceDFCombined$TrainingData,pattern = '_',n=2)[,1]
 
-
+# Create column indicating training data samples
 AUCDfCombined$TrainingDataSplit <-
   str_split_fixed(AUCDfCombined$TrainingData,pattern = '_',n=2)[,1]
 
 
-ggboxplot(data=ROCRPerformanceDFCombined,x='Probability',y='F1',fill='MLAlgo',facet.by = 'TrainingDataSplit')
-ggboxplot(data=ROCRPerformanceDFCombined,x='Probability',y='rec',facet.by = 'TrainingDataSplit',fill='MLAlgo')
-#ggscatter(data=ROCRPerformanceDFCombined,x='rec',y='prec',facet.by = 'TrainingDataSplit')
-
-ggboxplot(data=AUCDfCombined,x='TrainingDataSplit',y='AUC',color = 'TrainingDataSplit',facet.by ='MLAlgo' )
-ggboxplot(data=AUCDfCombined,x='TrainingDataSplit',y='AUC',color = 'TrainingDataSplit',facet.by ='MLAlgo' )
-
-
-library(dplyr)
-
+# Model selection for AUC -----------------------------------------------------
+# Assign to a new object
 auc.df <- AUCDfCombined
+
+# Convert algorithm to a factor
 auc.df$Algorithm <- as.factor(auc.df$MLAlgo)
+
+# Create column indicating training data samples
 auc.df$TrainingData <- str_split_fixed(auc.df$TrainingDataSplit,
                                        pattern = '_',n=2)[,1]
 
+# Convert to a factor
 auc.df$TrainingData <- 
   as.factor(auc.df$TrainingData)
 
-
-
+# Relabel factor levels for plotting 
 auc.df$TrainingData <- factor(auc.df$TrainingData,levels=c('Subset10', "Subset20","Subset40",
                                                            "Subset80","Subset160","Subset320","Subset400",
                                                            "TrainingDataAll","TrainingDataFemalesAdded"))
-
+# Reorder factor levels for plotting 
 levels(auc.df$TrainingData) <-  c("n=10","n=20","n=40",
                                   "n=80","n=160","n=320", "n=400","All","All + F")#
 
-AUCbox <- ggboxplot(data=auc.df,outlier.shape = NA,
-                    x='TrainingData',y='AUC',fill='TrainingData',facet.by = 'Algorithm')+ 
-  theme(axis.text.x = element_text(angle = 45,  hjust=1))+ ylim(0.5,0.9)+
-  theme(legend.position="none")+scale_fill_manual(values= matlab::jet.colors(9) )
-
+# Convert n=160 to reference level for modeling
 auc.df <- within(auc.df, TrainingData <- relevel(TrainingData, ref = "n=160"))
 
+# Remove any NA
 auc.df <- na.omit(auc.df)
-lm1 <- lm(AUC ~ TrainingData*Algorithm , data=auc.df)
-#lm1inter <- lm(AUC ~ TrainingData*Algorithm , data=auc.df)
+
+# Create full linear model
+lm1 <- lm(AUC ~ TrainingData+Algorithm , data=auc.df)
+
+# Create null linear model
 lmnull <- lm(AUC ~ 1 , data=auc.df)
+
+# Compare models using AIC
 bbmle::AICctab(lmnull,lm1,weights=T)
 
+# Create coefficient plot for manuscript
 AUCcoef <- sjPlot::plot_model(lm1,sort.est =T)+ylim(-0.25,0.25)+ geom_hline(yintercept = 0)+theme_bw()+scale_color_manual(values= c("#0080FF", "#FF8000") )
 AUCcoef
+
+# Summary of full model
 summary(lm1)
 anova(lm1)
 
-cowplot::plot_grid(AUCbox,AUCcoef)
+
+# Model selection for F1 score --------------------------------------------
 
 performance.df <- ROCRPerformanceDFCombined
 
