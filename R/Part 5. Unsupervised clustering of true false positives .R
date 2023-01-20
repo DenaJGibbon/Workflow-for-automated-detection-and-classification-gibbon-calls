@@ -13,9 +13,12 @@ library(ggpubr)
 set.seed(13)
 
 # True and False Positives ------------------------------------------------
+# Get input directory for data and sound files
+# NOTE: You must change this to the location where you have stored the downloaded data
+input.dir <- '/Volumes/DJC Files/Clink et al Zenodo Data/'
 
 source('R/MFCCFunctionMeanSD.R')
-subset.directory <- "/Users/denaclink/Desktop/RStudio Projects/gibbonID/DanumDetections/TrueFalsePositives/"
+subset.directory <- paste(input.dir, 'TrueFalsePositives', sep='')
 
 trainingdata <- MFCCFunctionMeanSD(input.dir=subset.directory , min.freq = 500, max.freq = 1600)
 
@@ -69,7 +72,7 @@ Plot1
 
 
 
-# Supervised clustering -------------------------------------------------
+# Supervised classification -------------------------------------------------
 trainingdata$Class <- revalue(trainingdata$Class,
                                               c(o = 'y',oo='y'))
 
@@ -80,7 +83,6 @@ ml.model.svm <- e1071::svm(trainingdata[,-c(1,51)], trainingdata$Class, kernel =
 print(paste('SVM accuracy',ml.model.svm$tot.accuracy))
 
 # Unsupervised clustering -------------------------------------------------
-
 
 AcousticSignalsAP <-
   apcluster::apcluster(negDistMat(r=2),q= 0.1,

@@ -2,10 +2,20 @@ library(stringr)
 library(lubridate)
 library(ggpubr)
 
+# Prepare data ------------------------------------------------------------
+# Get input directory for data and sound files
+# NOTE: You must change this to the location where you have stored the downloaded data
+input.dir <- '/Volumes/DJC Files/Clink et al Zenodo Data/'
+
+# Get directory to location of .wav files
+wavfile.dir <- paste(input.dir,'TrueFalsePositiveTables',sep='')
+
+# Get full file paths
 ValidationTables <- 
-  list.files('Data/TrueFalsePositiveTables',
+  list.files(paste(input.dir,'TrueFalsePositiveTables',sep=''),
              full.names = T)
 
+# Combine tables into a dataframe
 ValidationDF <- data.frame()
 for(a in 1:length(ValidationTables)){
   print(a)
@@ -13,20 +23,19 @@ for(a in 1:length(ValidationTables)){
   ValidationDF <- rbind.data.frame(ValidationDF,Tempdf )
 }
 
+# How many rows of detections?
 nrow(ValidationDF) # 4771
 
+# Subset yes or overlap
 ValidationDFCorrect <-
   subset(ValidationDF,target.signal=='y'|target.signal=='o'|target.signal=='oo')
 
-nrow(ValidationDFCorrect) # 4372; still need to decide what to do with '?'
+# How many correct?
+nrow(ValidationDFCorrect) # 4372; 
 
+# Calculate precision
 nrow(ValidationDFCorrect)/nrow(ValidationDF)
 
-table(ValidationDFCorrect$target.signal)
-
-tail(table(ValidationDFCorrect$recorder,ValidationDFCorrect$date))
-
-head(ValidationDFCorrect)
 
 start.time.mins <- ValidationDFCorrect$start.time/60
 ValidationDFCorrect$start.time.mins <-  as.numeric(substr(ValidationDFCorrect$time,start=1,stop=1))
@@ -78,7 +87,7 @@ ValidationDFupdated$TempStartTime <- str_split_fixed(ValidationDFupdated$TempSta
 ValidationDFupdated$TempStartHour <- str_split_fixed(ValidationDFupdated$TempStartTime,pattern = ':',n=2)[,1]
 
 
-gibbon.files <- list.files("/Users/denaclink/Desktop/LTSA_detections/gibbons",full.names = T)
+gibbon.files <- list.files(paste(input.dir,'GibbonAnnotationsLTSA',sep=''),full.names = T)
 gibbon.files.short <- list.files("/Users/denaclink/Desktop/LTSA_detections/gibbons",full.names = F)
 Recorder.gibbon <- str_split_fixed(gibbon.files.short,pattern = '_',n=2)[,1]
 gibbon.annotations <- data.frame()
@@ -127,7 +136,7 @@ AnnotationsCombinedDF <-
 # Note: need to change to today's date
 gghistogram(data=AnnotationsCombinedDF,x='Start.time',fill='DataSet',facet.by = 'DataSet',scales='free')+
   
-  scale_x_datetime(limits = ymd_h(c("2023-01-02 11", "2023-01-02 16"))) + theme(legend.position = "none")+
+  scale_x_datetime(limits = ymd_h(c("2023-01-20 11", "2023-01-20 16"))) + theme(legend.position = "none")+
   scale_fill_manual(values=c('blue','yellow') )+xlab('Time')+ylab('Count')
 
 AutomatedSub<- subset(AnnotationsCombinedDF,DataSet=='Automated')
