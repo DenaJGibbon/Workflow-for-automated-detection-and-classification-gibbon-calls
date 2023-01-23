@@ -113,3 +113,4 @@ NewDataFrame$Cluster <- as.factor(NewDataFrame$Cluster)
 # Revalue cluster levels starting at 1
 levels(NewDataFrame$Cluster) <- seq(1,length(AcousticSignalsAPFemales@exemplars),1)
 
+#write.csv(NewDataFrame,'ClusterByRecorderDF.csv',row.names = F)
