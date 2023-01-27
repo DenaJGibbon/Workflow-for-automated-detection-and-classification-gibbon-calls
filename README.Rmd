@@ -34,25 +34,28 @@ Download and unzip files to a local drive that can be accessed using R. doi: 10.
 
 # R script descriptions
 ### Part 1. Random iterations
-This code 
+This script randomly subsets the training data into subsets (n= 10,20,40,80,160,320,400) over 10 iterations. The varying numbers of training data are used in the detector/classifier over the validation data set. 
 
 ### Part 2. Performance metrics on validation dataset
+This script calculates area under the curve and F1 score for all of the random iterations.
 
 ### Part 3. Performance metrics on test dataset
+This script calculates the final performance metrics on the test dataset. 
 
 ### Part 4. Compare manual and automated annotations
+This script compares the automated detections output by the system with manual annotations done by a human observer using LTSAs.
 
 ### Part 5. Unsupervised clustering of true/false positives
+This script uses affinity propagation clustering on labeled true/false positives.
 
 ### Part 6. Unsupervised clustering of female calls
+This script uses affinity propagation clustering on high-quality female gibbon calls.
 
 ### Part 7. Female call exemplar plots
-
-
-
+This script plots cluster assignment by recorder location and adds an exemplar spectrogram to the plot.
 
 ```{r , echo = FALSE}
-
+grid::grid.raster( tiff::readTIFF( "Figures/Frontiers Figures 9.tif")) 
 ```
 
 
