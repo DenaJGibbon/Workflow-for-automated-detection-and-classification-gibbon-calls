@@ -9,19 +9,16 @@ library(flextable)
 
 # Data Preparation --------------------------------------------------------
 # Set input directory for data and sound files
-# NOTE: You must change this to the location where you have stored the downloaded data
-input.dir <- '/Volumes/DJC Files/Clink et al Zenodo Data/'
-
 # Link to gibbonR output selection tables
-RandomIterFolders <-list.files(paste(input.dir,'gibbonRoutputRandomIterations5s',sep=''),
+RandomIterFolders <-list.files('Data/gibbonRoutputRandomIterations5s',
                                full.names = T)
 
 # Get just the names of the folders
-ListTrainingDirectories <-list.files(paste(input.dir,'gibbonRoutputRandomIterations5s',sep=''),
+ListTrainingDirectories <-list.files('Data/gibbonRoutputRandomIterations5s',
                                      full.names = F)
 
 # Link to annotated sound files
-AnnotatedFiles <- list.files( paste(input.dir,'DataSheets/AnnotatedFilesValidation',sep=''))
+AnnotatedFiles <- list.files('Data/AnnotatedFilesValidation',full.names = F)
 AnnotatedFilesFull <- list.files( paste(input.dir,'DataSheets/AnnotatedFilesValidation',sep=''),
                                   full.names = T)
 

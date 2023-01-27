@@ -14,21 +14,21 @@ input.dir <- '/Volumes/DJC Files/Clink et al Zenodo Data/'
 wavfile.dir <- paste(input.dir,'ValidationSoundFiles',sep='')
 
 # Link to annotated selection tables 
-AnnotatedFiles <- list.files( paste(input.dir,'DataSheets/AnnotatedFilesTest',sep=''))
+AnnotatedFiles <- list.files( 'Data/AnnotatedFilesTest')
 
 # Find full file path of annotated selection tables
-AnnotatedFilesFull <- list.files(paste(input.dir,'DataSheets/AnnotatedFilesTest',sep=''),
+AnnotatedFilesFull <- list.files('Data/AnnotatedFilesTest',
                                  full.names = T)
 
 # List wave files
 WavFileNames <- list.files(wavfile.dir,recursive = T,full.names = T)
 
 # Read in .csv
-trainingdata <- read.csv(paste(input.dir,'DataSheets/MFCCTrainingAllSamples.csv',sep=''))
+trainingdata <- read.csv('Data/MFCCTrainingAllSamples.csv')
 
 # Convert class to a factor
 trainingdata$class <- as.factor(trainingdata$class)
-# 
+ 
 # # Run detector/classifier over list of wav files --------------------------
 # Below is the code to run the detector/classifier over the test data
 # output.dir <- 'Data/'
@@ -63,10 +63,10 @@ trainingdata$class <- as.factor(trainingdata$class)
 # Data Preparation --------------------------------------------------------
 
 # Link to gibbonR output selection tables
-RandomIterFolders <-list.files(paste(input.dir,'TestOutput5s',sep=''),
+RandomIterFolders <-list.files('Data/TestOutput5s',
                                full.names = T)
 
-RandomIterFoldersShort <-list.files(paste(input.dir,'TestOutput5s',sep=''),
+RandomIterFoldersShort <-list.files('Data/TestOutput5s',
                                full.names = F)
 
 # Determine file names from annotated file names

@@ -3,17 +3,13 @@ library(lubridate)
 library(ggpubr)
 
 # Prepare data ------------------------------------------------------------
-# Get input directory for data and sound files
-# NOTE: You must change this to the location where you have stored the downloaded data
-input.dir <- '/Volumes/DJC Files/Clink et al Zenodo Data/'
-
 # Get full file paths for LTSA annotations
-gibbon.files <- list.files(paste(input.dir,'DataSheets/GibbonAnnotationsLTSA',sep=''),full.names = T)
-gibbon.files.short <- list.files(paste(input.dir,'DataSheets/GibbonAnnotationsLTSA',sep=''),full.names = F)
+gibbon.files <- list.files('Data/GibbonAnnotationsLTSA',full.names = T)
+gibbon.files.short <- list.files('Data/GibbonAnnotationsLTSA',full.names = F)
 
 # Get full file paths for detection tables
 ValidationTables <- 
-  list.files(paste(input.dir,'DataSheets/TrueFalsePositiveTables',sep=''),
+  list.files('Data/TrueFalsePositiveTables',
              full.names = T)
 
 # Combine tables into a dataframe
@@ -156,4 +152,5 @@ ManualSub<- subset(AnnotationsCombinedDF,DataSet=='Manual')
 ks.test(as.numeric(AutomatedSub$Start.time),
         as.numeric(ManualSub$Start.time))
 
-
+# p-value > 0.05 
+round(0.05756,2)
