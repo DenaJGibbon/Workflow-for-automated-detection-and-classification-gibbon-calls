@@ -6,6 +6,7 @@ library(ggpubr)
 library(umap)
 library(apcluster)
 library(cowplot)
+library(aricode)
 
 # Set seed for reproducibility
 set.seed(13)
