@@ -44,7 +44,7 @@ data set.
 
 This script calculates area under the curve and F1 score for all of the
 random iterations.
-![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+<img src="README_files/figure-gfm/unnamed-chunk-3-1.png" width="50%" height="50%" />
 
 ### Part 3. Performance metrics on test dataset
 
@@ -55,21 +55,24 @@ dataset.
 
 This script compares the automated detections output by the system with
 manual annotations done by a human observer using LTSAs.
-![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+<img src="README_files/figure-gfm/unnamed-chunk-4-1.png" width="50%" height="50%" />
 
 ### Part 5. Unsupervised clustering of true/false positives
 
 This script uses affinity propagation clustering on labeled true/false
-positives. ![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+positives.
+<img src="README_files/figure-gfm/unnamed-chunk-5-1.png" width="50%" height="50%" />
 
 ### Part 6. Unsupervised clustering of female calls
 
 This script uses affinity propagation clustering on high-quality female
-gibbon calls. ![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+gibbon calls.
+<img src="README_files/figure-gfm/unnamed-chunk-6-1.png" width="50%" height="50%" />
 
 ### Part 7. Female call exemplar plots
 
 This script plots cluster assignment by recorder location and adds an
 exemplar spectrogram to the plot.
 
-![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+<img src="README_files/figure-gfm/unnamed-chunk-7-1.png" width="50%" height="50%" />

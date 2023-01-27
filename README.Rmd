@@ -38,7 +38,7 @@ This script randomly subsets the training data into subsets (n= 10,20,40,80,160,
 
 ### Part 2. Performance metrics on validation dataset
 This script calculates area under the curve and F1 score for all of the random iterations.
-```{r , echo = FALSE,dpi=300}
+```{r , echo = FALSE,dpi=300,out.width="50%",out.height="50%"}
 grid::grid.raster( tiff::readTIFF( "Figures/Frontiers Figures 5.tiff")) 
 ```
 
@@ -46,22 +46,23 @@ grid::grid.raster( tiff::readTIFF( "Figures/Frontiers Figures 5.tiff"))
 This script calculates the final performance metrics on the test dataset. 
 
 ### Part 4. Compare manual and automated annotations
-This script compares the automated detections output by the system with manual annotations done by a human observer using LTSAs.
-```{r , echo = FALSE,dpi=300}
+This script compares the automated detections output by the system with manual annotations done by a human observer using LTSAs.  
+  
+```{r , echo = FALSE,dpi=300,out.width="50%",out.height="50%"}
 grid::grid.raster( tiff::readTIFF( "Figures/Frontiers Figures 6.tiff")) 
 ```
 
 
 ### Part 5. Unsupervised clustering of true/false positives
 This script uses affinity propagation clustering on labeled true/false positives.
-```{r , echo = FALSE,dpi=300}
+```{r , echo = FALSE,dpi=300,out.width="50%",out.height="50%"}
 grid::grid.raster( tiff::readTIFF( "Figures/Frontiers Figures 7.tiff")) 
 ```
 
 
 ### Part 6. Unsupervised clustering of female calls
 This script uses affinity propagation clustering on high-quality female gibbon calls.
-```{r , echo = FALSE,dpi=300}
+```{r , echo = FALSE,dpi=300,out.width="50%",out.height="50%"}
 grid::grid.raster( tiff::readTIFF( "Figures/Frontiers Figures 8.tiff")) 
 ```
 
@@ -69,7 +70,7 @@ grid::grid.raster( tiff::readTIFF( "Figures/Frontiers Figures 8.tiff"))
 ### Part 7. Female call exemplar plots
 This script plots cluster assignment by recorder location and adds an exemplar spectrogram to the plot.
 
-```{r , echo = FALSE,dpi=300}
+```{r , echo = FALSE,dpi=300,out.width="50%",out.height="50%"}
 grid::grid.raster( tiff::readTIFF( "Figures/Frontiers Figures 9.tif")) 
 ```
 
