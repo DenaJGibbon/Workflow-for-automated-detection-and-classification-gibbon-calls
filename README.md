@@ -12,6 +12,27 @@ for the automated detection and classification of female gibbon calls
 from long-term acoustic recordings. Frontiers in Ecology and Evolution.
 11:1071640. doi: 10.3389/fevo.2023.1071640
 
+# Quick start guide
+
+## You can install the development version of the R package ‘gibbonR’ from [GitHub](https://github.com/DenaJGibbon) with:
+
+``` r
+install.packages("devtools")
+devtools::install_github("DenaJGibbon/gibbonR")
+library(gibbonR)
+```
+
+## Tutorial for gibbonR
+
+<https://denajgibbon.github.io/gibbonR-tutorial/>
+
+## You can download the required data from Zenodo:
+
+Download and unzip files to a local drive that can be accessed using R.
+doi: 10.5281/zenodo.7562095
+
+# R script descriptions
+
 ### Part 1. Random iterations
 
 This code
