@@ -2,6 +2,8 @@ library(stringr)
 library(lubridate)
 library(ggpubr)
 
+# NOTE: You must change the date to today's date in line 144 to create the histogram
+
 # Prepare data ------------------------------------------------------------
 # Get full file paths for LTSA annotations
 gibbon.files <- list.files('Data/GibbonAnnotationsLTSA',full.names = T)
@@ -139,8 +141,7 @@ AnnotationsCombinedDF <-
 # Histogram of automated versus manual ------------------------------------
 # Note: need to change to today's date
 gghistogram(data=AnnotationsCombinedDF,x='Start.time',fill='DataSet',facet.by = 'DataSet',scales='free')+
-  
-  scale_x_datetime(limits = ymd_h(c("2023-01-23 11", "2023-01-23 16"))) + theme(legend.position = "none")+
+  scale_x_datetime(limits = ymd_h(c("2023-01-27 11", "2023-01-27 16"))) + theme(legend.position = "none")+
   scale_fill_manual(values=c('blue','yellow') )+xlab('Time')+ylab('Count')
 
 

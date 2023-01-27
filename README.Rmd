@@ -32,7 +32,7 @@ https://denajgibbon.github.io/gibbonR-tutorial/
 ## You can download the required data from Zenodo: 
 Download and unzip files to a local drive that can be accessed using R. doi: 10.5281/zenodo.7562095
 
-# R script descriptions
+# R script descriptions (located in the 'R' folder)
 ### Part 1. Random iterations
 This script randomly subsets the training data into subsets (n= 10,20,40,80,160,320,400) over 10 iterations. The varying numbers of training data are used in the detector/classifier over the validation data set. 
 

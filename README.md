@@ -31,7 +31,7 @@ library(gibbonR)
 Download and unzip files to a local drive that can be accessed using R.
 doi: 10.5281/zenodo.7562095
 
-# R script descriptions
+# R script descriptions (located in the ‘R’ folder)
 
 ### Part 1. Random iterations
 
