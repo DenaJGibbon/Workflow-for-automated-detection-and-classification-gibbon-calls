@@ -1,16 +1,14 @@
 library(ggpubr)
 library(png)
 library(matlab)
+library(grid)
 
 # Prepare data ------------------------------------------------------------
-# NOTE: You must change this to the location where you have stored the downloaded data
-input.dir <- '/Volumes/DJC Files/Clink et al Zenodo Data/'
-
 # Set file path to exemplars
-Exemplar.file.paths <- list.files(paste(input.dir,'Exemplars',sep=''),recursive = T,full.names = T)
+Exemplar.file.paths <- list.files('Data/Exemplars',full.names = T)
 
 # Read in datasheet with cluster and recorder assignment
-ClusterByRecorderDF <- read.csv(paste(input.dir,'/','DataSheets/','ClusterByRecorderDF.csv',sep=''))
+ClusterByRecorderDF <- read.csv('Data/ClusterByRecorderDF.csv')
 
 # Create data frame with 'NA' place holders for plots later
 DFForLevels <- cbind.data.frame(c("S10", "S11", "S12", "S14", "S15", "S16", "S17", "S18", "S19",
