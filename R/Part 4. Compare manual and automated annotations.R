@@ -32,8 +32,11 @@ ValidationDFCorrect <-
 # How many correct?
 nrow(ValidationDFCorrect) # 3662
 
+# How many incorrect?
+nrow(ValidationDF)-nrow(ValidationDFCorrect)
+
 # Calculate precision
-nrow(ValidationDFCorrect)/nrow(ValidationDF)
+round(nrow(ValidationDFCorrect)/nrow(ValidationDF),2)
 
 
 # Convert detections to standardized format -------------------------------
