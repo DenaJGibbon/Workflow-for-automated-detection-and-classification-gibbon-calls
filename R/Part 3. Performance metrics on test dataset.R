@@ -114,8 +114,6 @@ AnnotatedFiles.Notxt <- str_split_fixed(AnnotatedFiles,pattern = '.Table',n=2)[,
 # Remove files contained in training data
 AnnotatedFiles.Notxt <- AnnotatedFiles.Notxt[- which(AnnotatedFiles.Notxt %in% c("S10_20180425_060002", "S10_20180702_060002", "S10_20180704_060002","S11_20180314_080003", "S11_20180322_060002", "S17_20180408_060002"))]
 
-AnnotatedFiles.Notxt <- AnnotatedFiles.Notxt[-c(all_combinations[,z])]
-
 # Find matching text and sound files
 RandomIterFolders <- 
   RandomIterFolders[(RandomFiles %in% AnnotatedFiles.Notxt)]
