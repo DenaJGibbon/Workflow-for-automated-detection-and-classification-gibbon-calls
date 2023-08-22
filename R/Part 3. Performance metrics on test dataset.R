@@ -1,10 +1,11 @@
-library(gibbonR)
+#library(gibbonR)
 library(ROCR)
 library(stringr)
 library(ggpubr)
 library(reshape2)
 library(dplyr)
 
+devtools::load_all("/Users/denaclink/Desktop/RStudioProjects/gibbonR")
 # # Link .wav files to selection tables -----------------------------------
 # Get input directory for data and sound files
 # NOTE: You must change this to the location where you have stored the downloaded data
@@ -294,5 +295,4 @@ perfprec <- performance(pred, "prec")
 perfprec@x.values[[1]][maxindex]
 perfprec@y.values[[1]][maxindex]
 
-max(na.omit(F1)) # 0.75
-
+max(na.omit(F1)) # 0.77
