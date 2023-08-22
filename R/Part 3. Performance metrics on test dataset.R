@@ -110,6 +110,11 @@ humanannotations <- droplevels(subset(humanannotations,Call.type=='female.gibbon
 RandomFiles <- str_split_fixed(RandomIterFoldersShort,pattern = 'gibbonR',n=2)[,1]
 AnnotatedFiles.Notxt <- str_split_fixed(AnnotatedFiles,pattern = '.Table',n=2)[,1]
 
+# Remove files contained in training data
+AnnotatedFiles.Notxt <- AnnotatedFiles.Notxt[- which(AnnotatedFiles.Notxt %in% c("S10_20180425_060002", "S10_20180702_060002", "S10_20180704_060002","S11_20180314_080003", "S11_20180322_060002", "S17_20180408_060002"))]
+
+AnnotatedFiles.Notxt <- AnnotatedFiles.Notxt[-c(all_combinations[,z])]
+
 # Find matching text and sound files
 RandomIterFolders <- 
   RandomIterFolders[(RandomFiles %in% AnnotatedFiles.Notxt)]
@@ -124,8 +129,8 @@ RandomIterFoldersShort <-
 range.secs.start <- 4
 range.secs.end <- 2
 
-RandomDetectionsDF  <- data.frame()
 
+RandomDetectionsDF  <- data.frame()
 for(k in 1:length(RandomIterFolders)){ 
   print(k)
   # Select the folder
@@ -273,10 +278,21 @@ perfF1 <- performance(pred, "f")
 # isolate F1 
 F1 <-  perfF1@y.values[[1]]
 
-# Find which probability has highest F1
-Probability <- perfF1@x.values[[1]]
-Probability[maxindex]
-
 # What is the max F1
 maxindex <- which.max(na.omit(F1))
-max(na.omit(F1))
+max(na.omit(F1)) # 0.77
+
+# Find which probability has highest F1
+Probability <- perfF1@x.values[[1]]
+Probability[maxindex] # 0.98
+
+perfrec <- performance(pred, "rec")
+perfrec@x.values[[1]][maxindex]
+perfrec@y.values[[1]][maxindex]
+
+perfprec <- performance(pred, "prec")
+perfprec@x.values[[1]][maxindex]
+perfprec@y.values[[1]][maxindex]
+
+max(na.omit(F1)) # 0.75
+

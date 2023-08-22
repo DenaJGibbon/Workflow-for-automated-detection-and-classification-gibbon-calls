@@ -3,7 +3,7 @@ library(stringr)
 library(ggpubr)
 library(reshape2)
 library(dplyr)
-library(gibbonR)
+#library(gibbonR)
 library(bbmle)
 library(flextable)
 
@@ -69,6 +69,12 @@ for(k in 1:length(RandomIterFolders)){
   # List short and long file names
   RandomSelectionTables <- list.files(output.dir,full.names = T)
   RandomSelectionTablesShort <- list.files(output.dir,full.names = F)
+  
+  RemoveIndices <- c(which(str_detect(RandomSelectionTables,"S11_20180413_060002")), 
+  which(str_detect(RandomSelectionTables,"S18_20180304_100004"))) 
+  
+  RandomSelectionTables <- RandomSelectionTables[-RemoveIndices]
+  RandomSelectionTablesShort <- RandomSelectionTablesShort[-RemoveIndices]
   
   for(j in 1:length(RandomSelectionTables)){
 
@@ -193,7 +199,6 @@ RandomDetectionsDF <- rbind.data.frame(CombinedDetectionDF,RandomDetectionsDF)
   }
 }
   
-
 # Calculate model performance  ----------------------------------------------------------
 # Create sequence of probabilities
 ProbthreshSeq <- seq(0,1,0.1)
